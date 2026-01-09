@@ -1,0 +1,828 @@
+@extends('layouts.admin.app')
+
+@section('title', 'Add new zone')
+
+@push('css_or_js')
+@endpush
+
+@section('content')
+    <div class="content container-fluid">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-sm mb-2 mb-sm-0">
+                    <h1 class="page-header-title"><i class="tio-add-circle-outlined"></i> {{ translate('messages.add') }}
+                        {{ translate('messages.new') }} {{ translate('messages.zone') }}
+                    </h1>
+                </div>
+            </div>
+        </div>
+        <!-- End Page Header -->
+        <div class="row gx-2 gx-lg-3">
+            <div class="col-sm-12 col-lg-12 mb-3 mb-lg-2">
+                <form action="{{ route('admin.zone.store') }}" method="post" id="zone_form">
+                    @csrf
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="input-label"
+                                    for="exampleFormControlInput1">Main Zone {{ translate('messages.name') }}</label>
+                                <input type="text" name="name" class="form-control"
+                                    placeholder="{{ translate('messages.main_zone_name') }}" value="{{ old('name') }}" required>
+                            </div>
+                               <div class="col-md-12 map-warper" style="height: 300px;">
+		                    <input id="pac-input" class="controls rounded" style="height: 3em;width:fit-content;"
+		                        title="{{ translate('messages.search_your_location_here') }}" type="text"
+		                        placeholder="{{ translate('messages.search_here') }}" />
+		                    <div id="map-canvas" style="height: 100%; margin:0px; padding: 0px;"></div>
+                        	</div>
+                            
+                            <div class="form-group"  style="margin-top:30px;">
+                                <label class="input-label" for="exampleFormControlInput1"> Main Zone Coordinates<span
+                                        class="input-label-secondary"
+                                        title="{{ translate('messages.draw_your_zone_on_the_map') }}">{{ translate('messages.draw_your_zone_on_the_map') }}</span></label>
+                                <textarea type="text" rows="8" name="coordinates" id="coordinates" class="form-control" readonly></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="input-label" for="exampleFormControlInput1">Sub Zone {{ translate('messages.name') }}</label>
+                                <input type="text" name="sub_zone" class="form-control"
+                                    placeholder="{{ translate('messages.sub_zone_name') }}" value="{{ old('sub_zone') }}"
+                                    required>
+                            </div>
+                            
+                             <div class="map-warper" style="height: 300px;">
+                            <input id="pac-input1" class="controls rounded" style="height: 3em;width:fit-content;"
+                                title="{{ translate('messages.search_your_location_here') }}" type="text"
+                                placeholder="{{ translate('messages.search_here') }}" />
+                            <div id="map-canvas1" style="height: 100%; margin:0px; padding: 0px;"></div>
+                        </div>
+                            
+                              <div class="form-group" style="margin-top:30px;">
+                                <label class="input-label" for="exampleFormControlInput1"> Sub Zone Coordinates<span
+                                        class="input-label-secondary"
+                                        title="{{ translate('messages.draw_your_sub_zone_on_the_map') }}">( {{ translate('messages.draw_your_sub_zone_on_the_map') }} )</span></label>
+                                <textarea type="text" rows="8" name="sub_zone_coordinates" id="sub_zone_coordinates" class="form-control" readonly></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="input-label" for="exampleFormControlInput1">Add Sub Zone Distance  (In
+                                    KM)</label>
+                                <input type="text" name="sub_zone_distance[]" class="form-control"
+                                    placeholder="{{ translate('messages.sub_zone_distance') }}">
+                            </div>
+
+                            <a href="#" class="add-more" style="float:right">Add More</a>
+
+                            <div id="sub_zone_data"></div>
+                            
+                             
+                            <div class="form-group">
+                                <label class="input-label" for="exampleFormControlInput1">Sub Sub Zone {{ translate('messages.name') }}</label>
+                                <input type="text" name="sub_sub_zone" class="form-control"
+                                    placeholder="{{ translate('messages.sub_sub_zone_name') }}" value="{{ old('sub_zone') }}"
+                                    required>
+                            </div>
+                            
+                               <div class="map-warper" style="height: 300px;">
+		                    <input id="pac-input2" class="controls rounded" style="height: 3em;width:fit-content;"
+		                        title="{{ translate('messages.search_your_location_here') }}" type="text"
+		                        placeholder="{{ translate('messages.search_here') }}" />
+		                    <div id="map-canvas2" style="height: 100%; margin:0px; padding: 0px;"></div>
+                        	</div>
+                            
+                             <div class="form-group" style="margin-top:30px;">
+                                <label class="input-label" for="exampleFormControlInput1"> Sub Sub Zone Coordinates<span
+                                        class="input-label-secondary"
+                                        title="{{ translate('messages.draw_your_sub_sub_zone_on_the_map') }}">( {{ translate('messages.draw_your_sub_sub_zone_on_the_map') }} )</span></label>
+                                <textarea type="text" rows="8" name="sub_sub_zone_coordinates" id="sub_sub_zone_coordinates" class="form-control" readonly></textarea>
+                            </div>
+                            
+                        </div>
+                       
+                     
+                        
+                        
+                    </div>
+                    <button type="submit" class="btn btn-primary">{{ translate('messages.add') }}</button>
+                </form>
+            </div>
+
+            <div class="col-sm-12 col-lg-12 mb-3 my-lg-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>{{ translate('messages.zone') }} {{ translate('messages.list') }}<span
+                                class="badge badge-soft-dark ml-2" id="itemCount">{{ $zones->total() }}</span></h5>
+                        <form action="javascript:" id="search-form">
+                            <!-- Search -->
+                            @csrf
+                            <div class="input-group input-group-merge input-group-flush">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <i class="tio-search"></i>
+                                    </div>
+                                </div>
+                                <input id="datatableSearch_" type="search" name="search" class="form-control"
+                                    placeholder="{{ translate('messages.search') }}"
+                                    aria-label="{{ translate('messages.search') }}" required>
+                                <button type="submit" class="btn btn-light">{{ translate('messages.search') }}</button>
+
+                            </div>
+                            <!-- End Search -->
+                        </form>
+                    </div>
+                    <!-- Table -->
+                    <div class="table-responsive datatable-custom">
+                        <table id="columnSearchDatatable"
+                            class="table table-borderless table-thead-bordered table-nowrap table-align-middle card-table"
+                            data-hs-datatables-options='{
+                                 "order": [],
+                                 "orderCellsTop": true,
+                                 "paging":false
+                               }'>
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>{{ translate('messages.#') }}</th>
+                                    <th>{{ translate('messages.id') }}</th>
+                                    <th>{{ translate('messages.name') }}</th>
+                                    <th>{{ translate('messages.stores') }}</th>
+                                    <th>{{ translate('messages.deliverymen') }}</th>
+                                    <th>{{ translate('messages.status') }}</th>
+                                    <th>{{ translate('messages.action') }}</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="set-rows">
+                                @foreach ($zones as $key => $zone)
+                                    <tr>
+                                        <td>{{ $key + $zones->firstItem() }}</td>
+                                        <td>{{ $zone->id }}</td>
+                                        <td>
+                                            <span class="d-block font-size-sm text-body">
+                                                {{ $zone['name'] }}
+                                            </span>
+                                        </td>
+                                        <td>{{ $zone->stores_count }}</td>
+                                        <td>{{ $zone->deliverymen_count }}</td>
+                                        <td>
+                                            <label class="toggle-switch toggle-switch-sm"
+                                                for="stocksCheckbox{{ $zone->id }}">
+                                                <input type="checkbox"
+                                                    onclick="status_form_alert('status-{{ $zone['id'] }}','Want to change status for this zone ?', event)"
+                                                    class="toggle-switch-input" id="stocksCheckbox{{ $zone->id }}"
+                                                    {{ $zone->status ? 'checked' : '' }}>
+                                                <span class="toggle-switch-label">
+                                                    <span class="toggle-switch-indicator"></span>
+                                                </span>
+                                            </label>
+                                            <form
+                                                action="{{ route('admin.zone.status', [$zone['id'], $zone->status ? 0 : 1]) }}"
+                                                method="get" id="status-{{ $zone['id'] }}">
+                                            </form>
+                                        </td>
+                                        <td>
+                                            <a class="btn btn-sm btn-white"
+                                                href="{{ route('admin.zone.edit', [$zone['id']]) }}"
+                                                title="{{ translate('messages.edit') }} {{ translate('messages.zone') }}"><i
+                                                    class="tio-edit"></i>
+                                            </a>
+                                            {{-- <a class="btn btn-sm btn-white" href="javascript:"
+                                        onclick="form_alert('zone-{{$zone['id']}}','Want to delete this zone ?')" title="{{translate('messages.delete')}} {{translate('messages.zone')}}"><i class="tio-delete-outlined"></i>
+                                        </a>
+                                        <form action="{{route('admin.zone.delete',[$zone['id']])}}" method="post" id="zone-{{$zone['id']}}">
+                                            @csrf @method('delete')
+                                        </form> --}}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                        <hr>
+                        <div class="page-area">
+                            <table>
+                                <tfoot>
+                                    {!! $zones->withQueryString()->links() !!}
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End Table -->
+        </div>
+    </div>
+
+@endsection
+
+@push('script_2')
+    <script>
+        function status_form_alert(id, message, e) {
+            e.preventDefault();
+            Swal.fire({
+                title: '{{ translate('messages.are_you_sure') }}',
+                text: message,
+                type: 'warning',
+                showCancelButton: true,
+                cancelButtonColor: 'default',
+                confirmButtonColor: '#FC6A57',
+                cancelButtonText: 'No',
+                confirmButtonText: 'Yes',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.value) {
+                    $('#' + id).submit()
+                }
+            })
+        }
+        auto_grow();
+
+        function auto_grow() {
+            let element = document.getElementById("coordinates");
+            element.style.height = "5px";
+            element.style.height = (element.scrollHeight) + "px";
+        }
+        
+        auto_grow_sub_zone();
+
+        function auto_grow_sub_zone() {
+            let element = document.getElementById("sub_zone_coordinates");
+            element.style.height = "5px";
+            element.style.height = (element.scrollHeight) + "px";
+        }
+        
+        auto_grow_sub_sub_zone();
+
+        function auto_grow_sub_sub_zone() {
+            let element = document.getElementById("sub_sub_zone_coordinates");
+            element.style.height = "5px";
+            element.style.height = (element.scrollHeight) + "px";
+        }
+    </script>
+    <script>
+        $(document).on('ready', function() {
+            var count = 1;
+            $(".add-more").on("click", function(e) {
+                e.preventDefault();
+                if (count <= 10) {
+                    var htmlData = '<div class="form-group">' +
+                        '<label class="input-label" for="exampleFormControlInput1">Add Sub Zone Distance (In KM)</label>' +
+                        '<input type="text" name="sub_zone_distance[]" class="form-control" placeholder="{{ translate('messages.sub_zone_distance') }}" >' +
+                        '<a  class="remove-sub-zone-section" style="float:right;cursor:pointer">Remove</a>' +
+                        '</div>';
+
+                    count++;
+
+                    $("#sub_zone_data").append(htmlData);
+
+                } else {
+                    alert("You can not add more than 10 sub zone distances");
+
+                }
+            });
+
+            $(document).on("click", ".remove-sub-zone-section", function(e) {
+                e.preventDefault();
+                count--;
+                $(this).parents(".form-group").remove();
+            });
+
+
+
+            // INITIALIZATION OF DATATABLES
+            // =======================================================
+            var datatable = $.HSCore.components.HSDatatables.init($('#columnSearchDatatable'));
+
+            $('#column1_search').on('keyup', function() {
+                datatable
+                    .columns(1)
+                    .search(this.value)
+                    .draw();
+            });
+
+
+            $('#column3_search').on('change', function() {
+                datatable
+                    .columns(2)
+                    .search(this.value)
+                    .draw();
+            });
+
+
+            // INITIALIZATION OF SELECT2
+            // =======================================================
+            $('.js-select2-custom').each(function() {
+                var select2 = $.HSCore.components.HSSelect2.init($(this));
+            });
+
+            $("#zone_form").on('keydown', function(e) {
+                if (e.keyCode === 13) {
+                    e.preventDefault();
+                }
+            })
+        });
+    </script>
+
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key={{ \App\Models\BusinessSetting::where('key', 'map_api_key')->first()->value }}&callback=initialize&libraries=drawing,places&v=3.49">
+    </script>
+
+    <script>
+        var map,map1,map2; // Global declaration of the map
+        var drawingManager;
+        var drawingManager1;
+        var lastpolygon = null;
+        var lastpolygon1 = null;
+        var lastpolygon2 = null;
+        var polygons = [];
+
+        function resetMap(controlDiv) {
+            // Set CSS for the control border.
+            const controlUI = document.createElement("div");
+            controlUI.style.backgroundColor = "#fff";
+            controlUI.style.border = "2px solid #fff";
+            controlUI.style.borderRadius = "3px";
+            controlUI.style.boxShadow = "0 2px 6px rgba(0,0,0,.3)";
+            controlUI.style.cursor = "pointer";
+            controlUI.style.marginTop = "8px";
+            controlUI.style.marginBottom = "22px";
+            controlUI.style.textAlign = "center";
+            controlUI.title = "Reset map";
+            controlDiv.appendChild(controlUI);
+            // Set CSS for the control interior.
+            const controlText = document.createElement("div");
+            controlText.style.color = "rgb(25,25,25)";
+            controlText.style.fontFamily = "Roboto,Arial,sans-serif";
+            controlText.style.fontSize = "10px";
+            controlText.style.lineHeight = "16px";
+            controlText.style.paddingLeft = "2px";
+            controlText.style.paddingRight = "2px";
+            controlText.innerHTML = "X";
+            controlUI.appendChild(controlText);
+            // Setup the click event listeners: simply set the map to Chicago.
+            controlUI.addEventListener("click", () => {
+                lastpolygon.setMap(null);
+                $('#coordinates').val('');
+
+            });
+        }
+        
+        function resetMap1(controlDiv) {
+            // Set CSS for the control border.
+            const controlUI = document.createElement("div");
+            controlUI.style.backgroundColor = "#fff";
+            controlUI.style.border = "2px solid #fff";
+            controlUI.style.borderRadius = "3px";
+            controlUI.style.boxShadow = "0 2px 6px rgba(0,0,0,.3)";
+            controlUI.style.cursor = "pointer";
+            controlUI.style.marginTop = "8px";
+            controlUI.style.marginBottom = "22px";
+            controlUI.style.textAlign = "center";
+            controlUI.title = "Reset map";
+            controlDiv.appendChild(controlUI);
+            // Set CSS for the control interior.
+            const controlText = document.createElement("div");
+            controlText.style.color = "rgb(25,25,25)";
+            controlText.style.fontFamily = "Roboto,Arial,sans-serif";
+            controlText.style.fontSize = "10px";
+            controlText.style.lineHeight = "16px";
+            controlText.style.paddingLeft = "2px";
+            controlText.style.paddingRight = "2px";
+            controlText.innerHTML = "X";
+            controlUI.appendChild(controlText);
+            // Setup the click event listeners: simply set the map to Chicago.
+            controlUI.addEventListener("click", () => {
+                lastpolygon1.setMap(null);
+                $('#sub_zone_coordinates').val('');
+
+            });
+        }
+        
+        
+        function resetMap2(controlDiv) {
+            // Set CSS for the control border.
+            const controlUI = document.createElement("div");
+            controlUI.style.backgroundColor = "#fff";
+            controlUI.style.border = "2px solid #fff";
+            controlUI.style.borderRadius = "3px";
+            controlUI.style.boxShadow = "0 2px 6px rgba(0,0,0,.3)";
+            controlUI.style.cursor = "pointer";
+            controlUI.style.marginTop = "8px";
+            controlUI.style.marginBottom = "22px";
+            controlUI.style.textAlign = "center";
+            controlUI.title = "Reset map";
+            controlDiv.appendChild(controlUI);
+            // Set CSS for the control interior.
+            const controlText = document.createElement("div");
+            controlText.style.color = "rgb(25,25,25)";
+            controlText.style.fontFamily = "Roboto,Arial,sans-serif";
+            controlText.style.fontSize = "10px";
+            controlText.style.lineHeight = "16px";
+            controlText.style.paddingLeft = "2px";
+            controlText.style.paddingRight = "2px";
+            controlText.innerHTML = "X";
+            controlUI.appendChild(controlText);
+            // Setup the click event listeners: simply set the map to Chicago.
+            controlUI.addEventListener("click", () => {
+                lastpolygon2.setMap(null);
+                $('#sub_sub_zone_coordinates').val('');
+
+            });
+        }
+
+        function initialize() {
+            @php($default_location = \App\Models\BusinessSetting::where('key', 'default_location')->first())
+            @php($default_location = $default_location->value ? json_decode($default_location->value, true) : 0)
+            var myLatlng = {
+                lat: {{ $default_location ? $default_location['lat'] : '23.757989' }},
+                lng: {{ $default_location ? $default_location['lng'] : '90.360587' }}
+            };
+
+            var indiaBounds = new google.maps.LatLngBounds(
+                new google.maps.LatLng(8.0883, 68.0929), // Southwest bounds of India
+                new google.maps.LatLng(37.0841, 97.3956) // Northeast bounds of India
+            );
+
+
+
+            var myOptions = {
+                zoom: 13,
+                center: myLatlng,
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                restriction: {
+                    latLngBounds: indiaBounds,
+                    strictBounds: false
+                }
+            }
+           map = new google.maps.Map(document.getElementById("map-canvas"), myOptions);
+           map1 = new google.maps.Map(document.getElementById("map-canvas1"), myOptions);
+           map2 = new google.maps.Map(document.getElementById("map-canvas2"), myOptions);
+           
+            drawingManager = new google.maps.drawing.DrawingManager({
+                drawingMode: google.maps.drawing.OverlayType.POLYGON,
+                drawingControl: true,
+                drawingControlOptions: {
+                    position: google.maps.ControlPosition.TOP_CENTER,
+                    drawingModes: [google.maps.drawing.OverlayType.POLYGON]
+                },
+                polygonOptions: {
+                    editable: true
+                }
+            });
+            drawingManager.setMap(map);
+            
+             drawingManager1 = new google.maps.drawing.DrawingManager({
+                drawingMode: google.maps.drawing.OverlayType.POLYGON,
+                drawingControl: true,
+                drawingControlOptions: {
+                    position: google.maps.ControlPosition.TOP_CENTER,
+                    drawingModes: [google.maps.drawing.OverlayType.POLYGON]
+                },
+                polygonOptions: {
+                    editable: true
+                }
+            });
+            
+             drawingManager1.setMap(map1);
+             
+             
+              drawingManager2 = new google.maps.drawing.DrawingManager({
+                drawingMode: google.maps.drawing.OverlayType.POLYGON,
+                drawingControl: true,
+                drawingControlOptions: {
+                    position: google.maps.ControlPosition.TOP_CENTER,
+                    drawingModes: [google.maps.drawing.OverlayType.POLYGON]
+                },
+                polygonOptions: {
+                    editable: true
+                }
+            });
+            
+             drawingManager2.setMap(map2);
+
+
+            //get current location block
+            // infoWindow = new google.maps.InfoWindow();
+            // Try HTML5 geolocation.
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const pos = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude,
+                        };
+                        map.setCenter(pos);
+                        map1.setCenter(pos);
+                        map2.setCenter(pos);
+                    });
+            }
+
+            drawingManager.addListener("overlaycomplete", function(event) {
+
+                const polygonPath = event.overlay.getPath();
+                for (let i = 0; i < polygonPath.getLength(); i++) {
+                    if (!indiaBounds.contains(polygonPath.getAt(i))) {
+                        alert("Please draw the polygon within the bounds of India.");
+                        event.overlay.setMap(null);
+                        return;
+                    }
+                }
+
+
+                if (lastpolygon) {
+                    lastpolygon.setMap(null);
+                }
+                $('#coordinates').val(event.overlay.getPath().getArray());
+                lastpolygon = event.overlay;
+                auto_grow();
+            });
+            
+             drawingManager1.addListener("overlaycomplete", function(event) {
+
+                const polygonPath = event.overlay.getPath();
+                for (let i = 0; i < polygonPath.getLength(); i++) {
+                    if (!indiaBounds.contains(polygonPath.getAt(i))) {
+                        alert("Please draw the polygon within the bounds of India.");
+                        event.overlay.setMap(null);
+                        return;
+                    }
+                }
+
+
+                if (lastpolygon1) {
+                    lastpolygon1.setMap(null);
+                }
+                $('#sub_zone_coordinates').val(event.overlay.getPath().getArray());
+                lastpolygon1 = event.overlay;
+                auto_grow_sub_zone();
+            });
+            
+             drawingManager2.addListener("overlaycomplete", function(event) {
+
+                const polygonPath = event.overlay.getPath();
+                for (let i = 0; i < polygonPath.getLength(); i++) {
+                    if (!indiaBounds.contains(polygonPath.getAt(i))) {
+                        alert("Please draw the polygon within the bounds of India.");
+                        event.overlay.setMap(null);
+                        return;
+                    }
+                }
+
+
+                if (lastpolygon2) {
+                    lastpolygon2.setMap(null);
+                }
+                $('#sub_sub_zone_coordinates').val(event.overlay.getPath().getArray());
+                lastpolygon2 = event.overlay;
+                auto_grow_sub_sub_zone();
+            });
+
+            const resetDiv = document.createElement("div");
+            resetMap(resetDiv, lastpolygon);
+            map.controls[google.maps.ControlPosition.TOP_CENTER].push(resetDiv);
+
+            // Create the search box and link it to the UI element.
+            const input = document.getElementById("pac-input");
+            const searchBox = new google.maps.places.SearchBox(input);
+            map.controls[google.maps.ControlPosition.TOP_CENTER].push(input);
+            
+               // Bias the SearchBox results towards current map's viewport.
+            map.addListener("bounds_changed", () => {
+                searchBox.setBounds(map.getBounds());
+            });
+            
+            
+              const resetDiv1 = document.createElement("div");
+            resetMap1(resetDiv1, lastpolygon1);
+            map1.controls[google.maps.ControlPosition.TOP_CENTER].push(resetDiv1);            
+          
+            
+            
+             // Create the search box and link it to the UI element.
+            const input1 = document.getElementById("pac-input1");
+            const searchBox1 = new google.maps.places.SearchBox(input1);
+            map1.controls[google.maps.ControlPosition.TOP_CENTER].push(input1);
+            
+             // Bias the SearchBox results towards current map's viewport.
+            map1.addListener("bounds_changed", () => {
+                searchBox1.setBounds(map1.getBounds());
+            });
+            
+            
+            const resetDiv2 = document.createElement("div");
+            resetMap2(resetDiv2, lastpolygon2);
+            map2.controls[google.maps.ControlPosition.TOP_CENTER].push(resetDiv2);            
+          
+            
+            
+             // Create the search box and link it to the UI element.
+            const input2 = document.getElementById("pac-input2");
+            const searchBox2 = new google.maps.places.SearchBox(input2);
+            map2.controls[google.maps.ControlPosition.TOP_CENTER].push(input2);
+            
+             // Bias the SearchBox results towards current map's viewport.
+            map2.addListener("bounds_changed", () => {
+                searchBox2.setBounds(map2.getBounds());
+            });
+            
+            
+            let markers = [];
+            // Listen for the event fired when the user selects a prediction and retrieve
+            // more details for that place.
+            searchBox.addListener("places_changed", () => {
+                const places = searchBox.getPlaces();
+
+                if (places.length == 0) {
+                    return;
+                }
+                // Clear out the old markers.
+                markers.forEach((marker) => {
+                    marker.setMap(null);
+                });
+                markers = [];
+                // For each place, get the icon, name and location.
+                const bounds = new google.maps.LatLngBounds();
+                places.forEach((place) => {
+                    if (!place.geometry || !place.geometry.location) {
+                        console.log("Returned place contains no geometry");
+                        return;
+                    }
+                    const icon = {
+                        url: place.icon,
+                        size: new google.maps.Size(71, 71),
+                        origin: new google.maps.Point(0, 0),
+                        anchor: new google.maps.Point(17, 34),
+                        scaledSize: new google.maps.Size(25, 25),
+                    };
+                    // Create a marker for each place.
+                    markers.push(
+                        new google.maps.Marker({
+                            map,
+                            icon,
+                            title: place.name,
+                            position: place.geometry.location,
+                        })
+                    );
+
+                    if (place.geometry.viewport) {
+                        // Only geocodes have viewport.
+                        bounds.union(place.geometry.viewport);
+                    } else {
+                        bounds.extend(place.geometry.location);
+                    }
+                });
+                map.fitBounds(bounds);
+            });
+            
+        let markers1 = [];
+	// Listen for the event fired when the user selects a prediction and retrieve
+	// more details for that place.
+	searchBox1.addListener("places_changed", () => {
+	    const places1 = searchBox1.getPlaces();
+
+	    if (places1.length == 0) {
+		return;
+	    }
+	    // Clear out the old markers.
+	    markers1.forEach((marker) => {
+		marker.setMap(null);
+	    });
+	    markers1 = [];
+	    // For each place, get the icon, name and location.
+	    const bounds1 = new google.maps.LatLngBounds();
+	    places1.forEach((place) => {
+		if (!place.geometry || !place.geometry.location) {
+		    console.log("Returned place contains no geometry");
+		    return;
+		}
+		const icon = {
+		    url: place.icon,
+		    size: new google.maps.Size(71, 71),
+		    origin: new google.maps.Point(0, 0),
+		    anchor: new google.maps.Point(17, 34),
+		    scaledSize: new google.maps.Size(25, 25),
+		};
+		// Create a marker for each place.
+		markers1.push(
+		    new google.maps.Marker({
+			map1,
+			icon,
+			title: place.name,
+			position: place.geometry.location,
+		    })
+		);
+
+		if (place.geometry.viewport) {
+		    // Only geocodes have viewport.
+		    bounds1.union(place.geometry.viewport);
+		} else {
+		    bounds1.extend(place.geometry.location);
+		}
+	    });
+	    map1.fitBounds(bounds1);
+	});
+	
+	let markers2 = [];
+// Listen for the event fired when the user selects a prediction and retrieve
+// more details for that place.
+searchBox2.addListener("places_changed", () => {
+    const places2 = searchBox2.getPlaces();
+
+    if (places2.length == 0) {
+        return;
+    }
+    // Clear out the old markers.
+    markers2.forEach((marker) => {
+        marker.setMap(null);
+    });
+    markers2 = [];
+    // For each place, get the icon, name and location.
+    const bounds2 = new google.maps.LatLngBounds();
+    places2.forEach((place) => {
+        if (!place.geometry || !place.geometry.location) {
+            console.log("Returned place contains no geometry");
+            return;
+        }
+        const icon = {
+            url: place.icon,
+            size: new google.maps.Size(72, 72),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(27, 34),
+            scaledSize: new google.maps.Size(25, 25),
+        };
+        // Create a marker for each place.
+        markers2.push(
+            new google.maps.Marker({
+                map2,
+                icon,
+                title: place.name,
+                position: place.geometry.location,
+            })
+        );
+
+        if (place.geometry.viewport) {
+            // Only geocodes have viewport.
+            bounds2.union(place.geometry.viewport);
+        } else {
+            bounds2.extend(place.geometry.location);
+        }
+    });
+    map2.fitBounds(bounds2);
+});
+     }
+
+        // initialize();
+
+
+        function set_all_zones() {
+            $.get({
+                url: '{{ route('admin.zone.zoneCoordinates') }}',
+                dataType: 'json',
+                success: function(data) {
+                    for (var i = 0; i < data.length; i++) {
+                        polygons.push(new google.maps.Polygon({
+                            paths: data[i],
+                            strokeColor: "#FF0000",
+                            strokeOpacity: 0.8,
+                            strokeWeight: 2,
+                            fillColor: "#FF0000",
+                            fillOpacity: 0.1,
+                        }));
+                        polygons[i].setMap(map);
+                    }
+
+                },
+            });
+        }
+        $(document).on('ready', function() {
+            set_all_zones();
+        });
+    </script>
+    <script>
+        $('#search-form').on('submit', function() {
+            var formData = new FormData(this);
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+            $.post({
+                url: '{{ route('admin.zone.search') }}',
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                beforeSend: function() {
+                    $('#loading').show();
+                },
+                success: function(data) {
+                    $('#set-rows').html(data.view);
+                    $('#itemCount').html(data.total);
+                    $('.page-area').hide();
+                },
+                complete: function() {
+                    $('#loading').hide();
+                },
+            });
+        });
+    </script>
+@endpush
